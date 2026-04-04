@@ -23,7 +23,7 @@ const RequestStatus = () => {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/requests/${id}`);
+        const response = await axios.get(`http://localhost:5005/api/requests/${id}`);
         setRequest(response.data);
       } catch (err) {
         console.error('--- Status Fetch Error: ---', err);

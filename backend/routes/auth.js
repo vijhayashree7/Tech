@@ -6,20 +6,20 @@ const mockDb = require('../mockDb'); // Import for reliable fallback
 // Signup
 router.post('/signup', async (req, res) => {
   try {
-    const { email, phone, password, role, aadhaar, expertise } = req.body;
+    const { name, email, phone, password, role, aadhaar, expertise } = req.body;
     
     // Explicit selection of DB strategy based on module state
     if (mockDb.isConnected) {
       const userExists = await User.findOne({ email });
       if (userExists) return res.status(400).json({ msg: 'User already exists' });
-      const newUser = new User({ email, phone, password, role, aadhaar, expertise });
+      const newUser = new User({ name, email, phone, password, role, aadhaar, expertise });
       await newUser.save();
     } else {
       // Mock Storage Path - guaranteed to work without Mongoose selection errors
       if (mockDb.users.find(u => u.email === email)) {
         return res.status(400).json({ msg: 'User already exists' });
       }
-      mockDb.users.push({ email, phone, password, role, aadhaar, expertise });
+      mockDb.users.push({ name, email, phone, password, role, aadhaar, expertise, profilePic: '' });
       console.log('--- SAVED TO MOCK-DB: ---', email, 'as', role);
     }
     

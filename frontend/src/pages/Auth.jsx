@@ -13,6 +13,7 @@ const Auth = ({ initialLogin = true }) => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
     phone: '',
     password: '',
@@ -33,7 +34,7 @@ const Auth = ({ initialLogin = true }) => {
 
     try {
       const endpoint = isLogin ? 'login' : 'signup';
-      const response = await axios.post(`http://localhost:5000/api/auth/${endpoint}`, formData);
+      const response = await axios.post(`http://localhost:5005/api/auth/${endpoint}`, formData);
       
       if (isLogin) {
         localStorage.setItem('token', response.data.token || 'mock-token');
@@ -60,7 +61,7 @@ const Auth = ({ initialLogin = true }) => {
   };
 
   return (
-    <div className="w-full flex items-center justify-center" style={{ minHeight: '100vh', padding: '1.5rem' }}>
+    <div className="auth-page-centering" style={{ minHeight: '100vh', padding: '1.5rem' }}>
       {/* Cinematic Sage Background */}
       <div className="moving-bg-container">
         <div className="moving-bg" />
@@ -115,6 +116,20 @@ const Auth = ({ initialLogin = true }) => {
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col">
+          {!isLogin && (
+            <div className="glow-input-container">
+              <User className="input-icon" size={20} strokeWidth={3} />
+              <input 
+                type="text" 
+                placeholder="Full Name" 
+                required
+                className="glow-input"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+              />
+            </div>
+          )}
+
           <div className="glow-input-container">
             <Mail className="input-icon" size={20} strokeWidth={3} />
             <input 
