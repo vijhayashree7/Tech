@@ -15,6 +15,13 @@ const DashboardRouter = () => {
   return user.role === 'ServiceProvider' ? <ProviderDashboard /> : <Dashboard />;
 };
 
+import AdminLayout from './components/Admin/AdminLayout';
+import AdminOverview from './pages/Admin/AdminOverview';
+import AdminCustomers from './pages/Admin/AdminCustomers';
+import AdminWorkers from './pages/Admin/AdminWorkers';
+import AdminBookings from './pages/Admin/AdminBookings';
+import AdminFeedback from './pages/Admin/AdminFeedback';
+
 function App() {
   return (
     <Router>
@@ -26,10 +33,20 @@ function App() {
         <Route path="/service/:type" element={<RequestForm />} />
         <Route path="/location" element={<LocationPage />} />
         <Route path="/request-status/:id" element={<RequestStatus />} />
+        
+        {/* Admin Dashboard Routes */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminOverview />} />
+          <Route path="customers" element={<AdminCustomers />} />
+          <Route path="workers" element={<AdminWorkers />} />
+          <Route path="bookings" element={<AdminBookings />} />
+          <Route path="feedback" element={<AdminFeedback />} />
+          <Route path="analytics" element={<AdminOverview />} />
+        </Route>
+
         <Route path="/" element={<Navigate to="/dashboard" />} />
       </Routes>
     </Router>
   );
 }
-
 export default App;

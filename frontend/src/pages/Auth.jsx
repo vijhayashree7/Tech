@@ -19,7 +19,8 @@ const Auth = ({ initialLogin = true }) => {
     password: '',
     role: 'User',
     aadhaar: '',
-    expertise: ''
+    expertise: '',
+    adminKey: ''
   });
 
   const handleToggle = () => {
@@ -37,9 +38,16 @@ const Auth = ({ initialLogin = true }) => {
       const response = await axios.post(`http://localhost:5005/api/auth/${endpoint}`, formData);
       
       if (isLogin) {
+        const user = response.data.user || formData;
         localStorage.setItem('token', response.data.token || 'mock-token');
-        localStorage.setItem('user', JSON.stringify(response.data.user || formData));
-        navigate('/dashboard');
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        // Specialized Role-Based Redirection
+        if (user.role === 'Admin') {
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         setIsLogin(true);
         setError('Signup successful! Please Sign In now.');
@@ -81,24 +89,29 @@ const Auth = ({ initialLogin = true }) => {
           {isLogin ? 'Enter your credentials to enter the agency' : (formData.role === 'User' ? 'Create an account to join Abirami Agency' : 'Join as a Service Partner')}
         </p>
 
-        {!isLogin && (
-          <div className="flex justify-center space-x-4 mb-8">
-            <button 
-              type="button"
-              className={`px-6 py-2 rounded-full text-xs font-bold transition-all ${formData.role === 'User' ? 'bg-[#4a6350] text-white shadow-lg' : 'bg-white/30 text-[#4a6350]'}`}
-              onClick={() => setFormData({...formData, role: 'User'})}
-            >
-              USER
-            </button>
-            <button 
-              type="button"
-              className={`px-6 py-2 rounded-full text-xs font-bold transition-all ${formData.role === 'ServiceProvider' ? 'bg-[#4a6350] text-white shadow-lg' : 'bg-white/30 text-[#4a6350]'}`}
-              onClick={() => setFormData({...formData, role: 'ServiceProvider'})}
-            >
-              SERVICE PROVIDER
-            </button>
-          </div>
-        )}
+        <div className="flex flex-wrap justify-center gap-3 mb-8 px-2">
+          <button 
+            type="button"
+            className={`px-4 py-2 rounded-full text-[10px] font-black transition-all border-2 ${formData.role === 'User' ? 'bg-[#4a6350] text-white border-[#4a6350] shadow-lg' : 'bg-white/30 text-[#4a6350] border-transparent'}`}
+            onClick={() => setFormData({...formData, role: 'User'})}
+          >
+            USER
+          </button>
+          <button 
+            type="button"
+            className={`px-4 py-2 rounded-full text-[10px] font-black transition-all border-2 ${formData.role === 'ServiceProvider' ? 'bg-[#4a6350] text-white border-[#4a6350] shadow-lg' : 'bg-white/30 text-[#4a6350] border-transparent'}`}
+            onClick={() => setFormData({...formData, role: 'ServiceProvider'})}
+          >
+            SERVICE PROVIDER
+          </button>
+          <button 
+            type="button"
+            className={`px-4 py-2 rounded-full text-[10px] font-black transition-all border-2 ${formData.role === 'Admin' ? 'bg-[#242b26] text-white border-[#242b26] shadow-lg' : 'bg-white/30 text-[#242b26] border-transparent'}`}
+            onClick={() => setFormData({...formData, role: 'Admin'})}
+          >
+            ADMIN
+          </button>
+        </div>
 
         {error && (
           <motion.div 
@@ -200,6 +213,20 @@ const Auth = ({ initialLogin = true }) => {
                 />
               </div>
             </>
+          )}
+
+          {!isLogin && formData.role === 'Admin' && (
+            <div className="glow-input-container">
+              <ShieldCheck className="input-icon" size={20} strokeWidth={3} />
+              <input 
+                type="password" 
+                placeholder="Manager Access Key" 
+                required
+                className="glow-input bg-yellow-50/10"
+                value={formData.adminKey}
+                onChange={(e) => setFormData({...formData, adminKey: e.target.value})}
+              />
+            </div>
           )}
 
           {isLogin && (

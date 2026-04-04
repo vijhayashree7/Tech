@@ -2,6 +2,7 @@
 const mockDb = {
   users: [],
   requests: [], // Added: In-memory storage for service requests
+  feedbacks: [], // Added: In-memory storage for customer reviews
   isConnected: false,
   
   // Method to check connection state safely

@@ -6,7 +6,7 @@ const mockDb = require('../mockDb'); // Import for reliable fallback
 // Signup
 router.post('/signup', async (req, res) => {
   try {
-    const { name, email, phone, password, role, aadhaar, expertise } = req.body;
+    const { email, phone, password, role, aadhaar, expertise } = req.body;
     
     // Explicit selection of DB strategy based on module state
     if (mockDb.isConnected) {
