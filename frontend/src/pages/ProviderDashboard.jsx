@@ -47,9 +47,9 @@ const ProviderDashboard = () => {
       <motion.nav 
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="dashboard-nav"
+        className="provider-dashboard-nav"
       >
-        <div className="nav-actions">
+        <div className="provider-nav-actions">
           <div className="provider-status-badge">
             <div className={`status-dot ${isOnline ? 'status-online' : 'status-offline'}`}></div>
             {isOnline ? 'SYSTEMS ACTIVE' : 'OFFLINE'}
@@ -57,7 +57,7 @@ const ProviderDashboard = () => {
           <button className="nav-icon-btn"><BellIcon size={20} /></button>
           <div 
             onClick={() => navigate('/profile')}
-            className="profile-avatar shadow-sm"
+            className="provider-avatar-btn shadow-sm"
           >
             <UserIcon size={20} />
           </div>
