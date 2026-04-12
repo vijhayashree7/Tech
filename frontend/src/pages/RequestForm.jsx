@@ -62,6 +62,45 @@ const RequestForm = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [requestId, setRequestId] = useState(null);
 
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Resizing to 1200px max dimension
+          const MAX_SIZE = 1200;
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Export as compressed JPEG (70% quality)
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          resolve(dataUrl);
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const fetchLiveLocation = () => {
     if ("geolocation" in navigator) {
       setIsLocating(true);
@@ -113,7 +152,8 @@ const RequestForm = () => {
         deadline: date,
         timeSlot,
         phoneNumber: phone,
-        address: 'Current Location (GPS)'
+        address: 'Current Location (GPS)',
+        customerLocation: location
       };
 
       const response = await axios.post('http://localhost:5005/api/requests/create', payload);
@@ -180,10 +220,11 @@ const RequestForm = () => {
             <div onClick={() => fileInputRef.current.click()} className="frosted-input text-center cursor-pointer border-dashed border-2 opacity-80 hover:opacity-100 flex flex-col items-center justify-center p-4 bg-white/30" style={{paddingLeft: '1.25rem'}}>
               <UploadIcon size={20} className="mb-1 text-[#4a6350]" />
               <span className="text-xs font-bold text-[#242b26]">Attach Image</span>
-              <input type="file" ref={fileInputRef} onChange={(e) => {
-                const reader = new FileReader();
-                reader.onloadend = () => setImagePreview(reader.result);
-                reader.readAsDataURL(e.target.files[0]);
+              <input type="file" ref={fileInputRef} onChange={async (e) => {
+                if (e.target.files && e.target.files[0]) {
+                  const compressed = await compressImage(e.target.files[0]);
+                  setImagePreview(compressed);
+                }
               }} hidden accept="image/*" />
             </div>
           ) : (

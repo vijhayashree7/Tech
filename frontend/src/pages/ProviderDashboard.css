@@ -139,21 +139,40 @@
 .btn-online-toggle:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15); }
 
 /* Job Cards Redesign */
-.job-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2rem;
-  background: white;
-  border: 1px solid var(--sage-border);
-  border-radius: 2rem;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
 .job-card:hover {
   transform: translateX(10px);
   border-color: var(--sage-primary);
   box-shadow: 0 20px 50px rgba(74, 99, 80, 0.1);
+}
+
+.job-card-wrapper {
+  background: white;
+  border-radius: 2rem;
+  border: 1px solid var(--sage-border);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0 2rem;
+}
+
+.job-card-wrapper.is-expanded {
+  box-shadow: 0 40px 100px rgba(74, 99, 80, 0.15);
+  border-color: var(--sage-primary);
+  margin: 2rem 0;
+  padding: 0 3rem;
+}
+
+.job-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem 0;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.job-card-wrapper:not(.is-expanded) .job-card:hover {
+  transform: translateX(5px);
 }
 
 .job-icon-box {

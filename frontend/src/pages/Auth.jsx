@@ -12,6 +12,15 @@ const Auth = ({ initialLogin = true }) => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const SERVICE_CATEGORIES = [
+    'Carpentry',
+    'Plumbing',
+    'Electrician',
+    'Gardening',
+    'Tank Cleaning',
+    'House Keeping'
+  ];
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -82,21 +91,38 @@ const Auth = ({ initialLogin = true }) => {
         </p>
 
         {!isLogin && (
-          <div className="flex justify-center space-x-4 mb-8">
-            <button 
-              type="button"
-              className={`px-6 py-2 rounded-full text-xs font-bold transition-all ${formData.role === 'User' ? 'bg-[#4a6350] text-white shadow-lg' : 'bg-white/30 text-[#4a6350]'}`}
+          <div className="role-selection-grid mb-10">
+            <motion.div 
+              whileHover={{ y: -5 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setFormData({...formData, role: 'User'})}
+              className={`role-option-card ${formData.role === 'User' ? 'active' : ''}`}
             >
-              USER
-            </button>
-            <button 
-              type="button"
-              className={`px-6 py-2 rounded-full text-xs font-bold transition-all ${formData.role === 'ServiceProvider' ? 'bg-[#4a6350] text-white shadow-lg' : 'bg-white/30 text-[#4a6350]'}`}
+              <div className="role-icon-wrap">
+                <User size={24} />
+              </div>
+              <div className="role-text-wrap">
+                <h3 className="role-card-title">Client</h3>
+                <p className="role-card-desc">I want to book a service</p>
+              </div>
+              {formData.role === 'User' && <motion.div layoutId="role-glow" className="role-glow-border" />}
+            </motion.div>
+
+            <motion.div 
+              whileHover={{ y: -5 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setFormData({...formData, role: 'ServiceProvider'})}
+              className={`role-option-card ${formData.role === 'ServiceProvider' ? 'active' : ''}`}
             >
-              SERVICE PROVIDER
-            </button>
+              <div className="role-icon-wrap">
+                <Briefcase size={24} />
+              </div>
+              <div className="role-text-wrap">
+                <h3 className="role-card-title">Partner</h3>
+                <p className="role-card-desc">I want to provide services</p>
+              </div>
+              {formData.role === 'ServiceProvider' && <motion.div layoutId="role-glow" className="role-glow-border" />}
+            </motion.div>
           </div>
         )}
 
@@ -188,17 +214,19 @@ const Auth = ({ initialLogin = true }) => {
                   onChange={(e) => setFormData({...formData, aadhaar: e.target.value})}
                 />
               </div>
-              <div className="glow-input-container">
-                <Briefcase className="input-icon" size={20} strokeWidth={3} />
-                <input 
-                  type="text" 
-                  placeholder="Field of Expertise" 
-                  required
-                  className="glow-input"
-                  value={formData.expertise}
-                  onChange={(e) => setFormData({...formData, expertise: e.target.value})}
-                />
-              </div>
+                <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4 mb-3 block">Field of Expertise</label>
+                <div className="expertise-scroll-container mb-6">
+                  {SERVICE_CATEGORIES.map(cat => (
+                    <button
+                      key={cat}
+                      type="button"
+                      className={`expertise-pill ${formData.expertise === cat ? 'active' : ''}`}
+                      onClick={() => setFormData({...formData, expertise: cat})}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
             </>
           )}
 

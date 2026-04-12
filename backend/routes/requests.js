@@ -1,27 +1,29 @@
 const express = require('express');
 const router = express.Router();
 const Request = require('../models/Request');
-const mockDb = require('../mockDb');
+
+// Get all service requests (for Partner Hub)
+router.get('/', async (req, res) => {
+  try {
+    const requests = await Request.find().sort({ createdAt: -1 });
+    res.json(requests);
+  } catch (err) {
+    console.error('--- Get All Requests Error: ---', err);
+    res.status(500).json({ msg: 'Failed to fetch request list' });
+  }
+});
 
 // Create a new service request
 router.post('/create', async (req, res) => {
   try {
-    const { userId, serviceType, problem, problemImage, deadline, timeSlot, phoneNumber, address } = req.body;
-    if (mockDb.isConnected) {
-      const newRequest = new Request({
-        userId, serviceType, problem, problemImage, deadline, timeSlot, phoneNumber, address, status: 'Searching'
-      });
-      await newRequest.save();
-      res.json({ msg: 'Request created successfully', request: newRequest });
-    } else {
-      const mockRequest = {
-        _id: 'mock-' + Date.now().toString(16),
-        userId, serviceType, problem, problemImage, deadline, timeSlot, phoneNumber, address, status: 'Searching'
-      };
-      mockDb.requests.push(mockRequest);
-      console.log('--- SAVED TO MOCK-DB (REQUEST): ---', mockRequest._id);
-      res.json({ msg: 'Request created successfully (Mock)', request: mockRequest });
-    }
+    const { userId, serviceType, problem, problemImage, deadline, timeSlot, phoneNumber, address, customerLocation } = req.body;
+    
+    const newRequest = new Request({
+      userId, serviceType, problem, problemImage, deadline, timeSlot, phoneNumber, address, customerLocation, status: 'Searching'
+    });
+    await newRequest.save();
+    
+    res.json({ msg: 'Request created successfully', request: newRequest });
   } catch (err) {
     console.error('--- Request Creation Error: ---', err);
     res.status(500).send('Server error');
@@ -50,23 +52,8 @@ router.put('/:id/status', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    let request;
-
-    // Check Mock DB first or if it's a mock- prefixed ID
-    if (id.startsWith('mock-')) {
-      request = mockDb.requests.find(r => r._id === id);
-    } else if (mockDb.isConnected) {
-      try {
-        request = await Request.findById(id);
-      } catch (castError) {
-        // Fallback to mock search if Mongoose fails finding by string ID
-      }
-    }
-
-    // Secondary fallback search in mock storage
-    if (!request) {
-      request = mockDb.requests.find(r => r._id === id);
-    }
+    
+    const request = await Request.findById(id);
 
     if (!request) return res.status(404).json({ msg: 'Request not found' });
     res.json(request);

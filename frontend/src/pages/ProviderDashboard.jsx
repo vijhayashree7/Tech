@@ -14,20 +14,20 @@ import {
   MoreVertical,
   Activity,
   LogOut,
-  Sparkles
+  Sparkles,
+  Phone as PhoneIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './ProviderDashboard.css';
 
 const ProviderDashboard = () => {
   const [user, setUser] = useState(null);
   const [isOnline, setIsOnline] = useState(true);
-  const [jobFeed, setJobFeed] = useState([
-    { id: 1, type: 'Plumbing', problem: 'Burst kitchen pipe', dist: '1.2 km', reward: '₹450', urgent: true },
-    { id: 2, type: 'Carpentry', problem: 'Door frame adjustment', dist: '3.5 km', reward: '₹300', urgent: false },
-    { id: 3, type: 'Electrical', problem: 'Fuse box replacement', dist: '5.1 km', reward: '₹600', urgent: false },
-  ]);
+  const [jobFeed, setJobFeed] = useState([]);
+  const [expandedJobId, setExpandedJobId] = useState(null);
+  const [declinedJobs, setDeclinedJobs] = useState([]); // Track declined jobs locally
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,8 +36,55 @@ const ProviderDashboard = () => {
       navigate('/login');
     } else {
       setUser(storedUser);
+      fetchJobs();
+      
+      // Real-time polling every 5 seconds
+      const poll = setInterval(fetchJobs, 5000);
+      return () => clearInterval(poll);
     }
   }, [navigate]);
+
+  const fetchJobs = async () => {
+    try {
+      const resp = await axios.get('http://localhost:5005/api/requests');
+      const storedUser = JSON.parse(localStorage.getItem('user'));
+      
+      // Filter to show only active searching requests
+      // AND not declined by this user session
+      // AND matching the provider's expertise (case-insensitive)
+      const filtered = resp.data.filter(j => {
+        const isSearching = j.status === 'Searching';
+        const notDeclined = !declinedJobs.includes(j._id || j.id);
+        const expertiseMatch = !storedUser.expertise || 
+          j.serviceType?.toLowerCase().includes(storedUser.expertise.toLowerCase()) ||
+          j.type?.toLowerCase().includes(storedUser.expertise.toLowerCase());
+        
+        return isSearching && notDeclined && expertiseMatch;
+      });
+      
+      setJobFeed(filtered);
+    } catch (err) {
+      console.error('--- Dashboard Fetch Error: ---', err);
+    }
+  };
+
+  const handleAcceptJob = async (jobId) => {
+    try {
+      await axios.put(`http://localhost:5005/api/requests/${jobId}/status`, { 
+        status: 'Accepted' 
+      });
+      setExpandedJobId(null);
+      fetchJobs();
+    } catch (err) {
+      alert('Acceptance failed. Try again.');
+    }
+  };
+
+  const handleDeclineJob = (jobId) => {
+    setDeclinedJobs(prev => [...prev, jobId]);
+    setExpandedJobId(null);
+    setJobFeed(prev => prev.filter(j => (j._id || j.id) !== jobId));
+  };
 
   if (!user) return null;
 
@@ -117,38 +164,102 @@ const ProviderDashboard = () => {
               </div>
               
               <div className="space-y-6">
-                <AnimatePresence>
-                  {jobFeed.map((job, i) => (
-                    <motion.div 
-                      key={job.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: 100 }}
-                      transition={{ delay: i * 0.1 }}
-                      whileHover={{ x: 10 }}
-                      className="job-card"
-                    >
-                      <div className="flex items-center gap-6">
-                         <div className={`job-icon-box ${job.urgent ? 'bg-red-50 text-red-500' : 'bg-sage-light text-sage-dark'}`}>
-                            <Zap size={28} fill={job.urgent ? 'currentColor' : 'none'} />
-                         </div>
-                         <div>
-                            <div className="flex items-center gap-3 mb-2">
-                               <h4 className="text-xl font-bold">{job.type} Service</h4>
-                               {job.urgent && <span className="badge-urgent">Urgent</span>}
+                 <AnimatePresence mode="popLayout">
+                  {jobFeed.map((job, i) => {
+                    const isUrgent = job.urgent || job.serviceType === 'Plumbing' || job.timeSlot === 'Urgent';
+                    return (
+                      <motion.div 
+                        key={job._id || job.id}
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="premium-job-card"
+                      >
+                        <div className="p-8">
+                          {/* Card Header: Type & Status */}
+                          <div className="flex justify-between items-start mb-6">
+                            <div className="flex items-center gap-4">
+                               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isUrgent ? 'bg-red-50 text-red-500 shadow-sm border border-red-100' : 'bg-sage-light text-sage-dark'}`}>
+                                  <Zap size={28} fill={isUrgent ? 'currentColor' : 'none'} />
+                               </div>
+                               <div>
+                                  <h4 className="text-2xl font-bold font-playfair">{job.serviceType || job.type} Service</h4>
+                                  <div className="flex items-center gap-2 mt-1">
+                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Incoming Request</span>
+                                     {isUrgent && <span className="badge-urgent-premium">URGENT</span>}
+                                  </div>
+                               </div>
                             </div>
-                            <p className="text-sm opacity-60 font-medium mb-3">{job.problem}</p>
-                            <div className="flex items-center gap-6 text-[10px] uppercase font-black tracking-widest opacity-30">
-                               <span className="flex items-center gap-1.5"><MapPin size={12} /> {job.dist} Local Radius</span>
-                               <span className="flex items-center gap-1.5"><Sparkles size={12} /> {job.reward} Projected</span>
+                            <div className="flex gap-3">
+                               <button 
+                                 onClick={() => handleAcceptJob(job._id || job.id)}
+                                 className="px-6 py-3 bg-sage-dark text-white rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-emerald-700 transition shadow-lg shadow-sage-dark/10"
+                               >
+                                 Accept Job
+                               </button>
+                               <button 
+                                 onClick={() => handleDeclineJob(job._id || job.id)}
+                                 className="px-6 py-3 bg-white border border-red-100 text-red-400 rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-red-50 transition"
+                               >
+                                 Decline
+                               </button>
                             </div>
-                         </div>
-                      </div>
-                      <button className="w-12 h-12 rounded-full bg-sage-light flex items-center justify-center hover:bg-sage-primary hover:text-white transition-all shadow-sm">
-                        <ChevronRight size={24} />
-                      </button>
-                    </motion.div>
-                  ))}
+                          </div>
+
+                          {/* Problem Details */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                             <div className="space-y-4">
+                                <div>
+                                   <label className="text-[10px] font-black uppercase tracking-widest opacity-40 block mb-2">Problem Description</label>
+                                   <p className="text-lg italic font-medium leading-relaxed font-times text-sage-dark bg-white/40 p-5 rounded-2xl border border-white/50 shadow-inner">
+                                     "{job.problem}"
+                                   </p>
+                                </div>
+                                <div className="flex gap-6 mt-4">
+                                   <div>
+                                      <label className="text-[10px] font-black uppercase tracking-widest opacity-40 block mb-1">Time to Finish</label>
+                                      <p className="text-sm font-bold flex items-center gap-2"><ClockIcon size={14}/> {job.timeSlot || 'Standard'}</p>
+                                   </div>
+                                   <div>
+                                      <label className="text-[10px] font-black uppercase tracking-widest opacity-40 block mb-1">Customer Address</label>
+                                      <p className="text-sm font-bold flex items-center gap-2"><MapPin size={14}/> {job.address || 'GPS Location'}</p>
+                                   </div>
+                                </div>
+                             </div>
+                             
+                             {job.problemImage && (
+                               <div>
+                                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 block mb-2">Photo Proof</label>
+                                  <img src={job.problemImage} className="w-full h-40 object-cover rounded-2xl shadow-md border border-white/60" alt="Proof" />
+                               </div>
+                             )}
+                          </div>
+
+                          {/* Live Location Section - Per Request */}
+                          <div>
+                             <div className="flex items-center justify-between mb-3">
+                                <label className="text-[10px] font-black uppercase tracking-widest opacity-40 block">Customer Live Location</label>
+                                <div className="flex items-center gap-2">
+                                   <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_red]"></div>
+                                   <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Live Position</span>
+                                </div>
+                             </div>
+                             <div className="w-full h-[220px] bg-[#f0f4f1] rounded-3xl overflow-hidden border border-white shadow-xl">
+                                {job.customerLocation ? (
+                                  <iframe width="100%" height="100%" frameBorder="0" style={{border:0}} src={`https://maps.google.com/maps?q=${job.customerLocation.lat},${job.customerLocation.lng}&z=15&output=embed`} allowFullScreen></iframe>
+                                ) : (
+                                  <div className="w-full h-full flex flex-col items-center justify-center opacity-30">
+                                     <MapPin size={32} className="mb-2" />
+                                     <p className="text-[10px] font-black uppercase tracking-widest">Co-ordinates not provided</p>
+                                  </div>
+                                )}
+                             </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
                 </AnimatePresence>
               </div>
             </section>

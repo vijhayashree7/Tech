@@ -14,6 +14,10 @@ const RequestSchema = new mongoose.Schema({
   providerLocation: {
     lat: { type: Number },
     lng: { type: Number }
+  },
+  customerLocation: {
+    lat: { type: Number },
+    lng: { type: Number }
   }
 });
 
