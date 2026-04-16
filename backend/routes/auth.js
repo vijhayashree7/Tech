@@ -5,7 +5,7 @@ const User = require('../models/User'); // Import for potential DB connection
 // Signup
 router.post('/signup', async (req, res) => {
   try {
-    const { name, email, phone, password, role, aadhaar, expertise } = req.body;
+    const { email, phone, password, role, aadhaar, expertise } = req.body;
     
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ msg: 'User already exists' });

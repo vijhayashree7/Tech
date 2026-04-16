@@ -1,3 +1,4 @@
+@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
@@ -636,7 +637,7 @@ h4 {
 
 .glow-glass-card {
   width: 100%;
-  max-width: 440px;
+  max-width: 480px;
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
